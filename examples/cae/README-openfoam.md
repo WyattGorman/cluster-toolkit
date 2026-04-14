@@ -1,3 +1,19 @@
+<!--
+Copyright 2026 Google LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
 # OpenFOAM CAE Blueprint with Visualization
 
 This folder contains a reference blueprint (`openfoam-blueprint.yaml`) for deploying an HPC cluster specifically tailored for OpenFOAM workloads and visualization.
@@ -7,6 +23,7 @@ It provisions a Slurm cluster using Google Cloud's C2D instance family (AMD EPYC
 ## Architecture and Components
 
 The architecture consists of the following key Google Cloud and cluster components:
+
 - **VPC Network**: A dedicated network and subnetwork for the compute cluster.
 - **Filestore (NFS)**: Two centralized storage mounts used across all VMs:
   - `/home`: For user profiles, case files, and simulation output data.
@@ -29,6 +46,7 @@ Through automated initialization scripts using `spack`, the cluster automaticall
 ## Deployment Instructions
 
 1. **Clone the repository and build the Toolkit:**
+
    ```bash
    git clone https://github.com/GoogleCloudPlatform/cluster-toolkit.git
    cd cluster-toolkit
@@ -36,9 +54,11 @@ Through automated initialization scripts using `spack`, the cluster automaticall
    ```
 
 2. **Configure Variables:**
+
    Edit the `openfoam-blueprint.yaml` to set your `project_id`. Alternatively, pass it dynamically during generation.
 
 3. **Generate Deployment and Deploy:**
+
    ```bash
    ./gcluster create examples/cae/openfoam-blueprint.yaml -w --vars project_id=<your-project-id>
    ./gcluster deploy openfoam-v6
@@ -47,7 +67,9 @@ Through automated initialization scripts using `spack`, the cluster automaticall
    Follow the prompts to deploy the components.
 
 4. **Wait for Software Installation:**
+
    After the cluster comes up, the `spack_builder` will automatically execute Spack compilation in the background. Because Paraview and OpenFOAM are compiled from source, this process will take several hours. You can monitor the progress by SSH'ing into the builder node and tailing `/var/log/spack.log`:
+
    ```bash
    gcloud compute ssh spack-builder-0 --zone us-central1-a
    tail -f /var/log/spack.log
@@ -60,11 +82,13 @@ Once the installation is complete, follow these steps to execute a simulation an
 ### Step 1: Run the OpenFOAM Simulation on Slurm
 
 Log into the Slurm login node:
+
 ```bash
 gcloud compute ssh openfoam-v6-login-0 --zone us-central1-a
 ```
 
 Since the environment script loads OpenFOAM automatically, you can immediately prepare a case. For example, using the standard `motorBike` tutorial:
+
 ```bash
 # Set up a working directory
 mkdir -p ~/openfoam_jobs
@@ -99,9 +123,11 @@ To visualize your data using the CRD VM, you first need to configure a Remote De
 1. In your local browser, navigate to [remotedesktop.google.com/headless](https://remotedesktop.google.com/headless).
 2. Follow the prompt to authenticate, and copy the "Debian Linux" installation command provided (it looks like `DISPLAY= /opt/google/chrome-remote-desktop/start-host --code="..." --redirect-url="..." --name=$(hostname)`).
 3. Connect to the CRD VM via SSH:
+
    ```bash
    gcloud compute ssh openfoam-v6-chrome-remote-desktop-0 --zone us-central1-a
    ```
+
 4. Paste and execute the command. When prompted, define a 6-digit PIN.
 
 ### Step 3: Visualize with Paraview
@@ -110,12 +136,16 @@ To visualize your data using the CRD VM, you first need to configure a Remote De
 2. You will see `openfoam-v6-chrome-remote-desktop-0` in your list of devices. Click it and enter your PIN.
 3. You are now presented with a desktop environment running on the cloud. Open a Terminal within the desktop environment.
 4. Because the shared `/home` is mounted on this VM and `/etc/profile.d/spack.sh` handles initialization, simply launch Paraview by running:
+
    ```bash
    paraview
    ```
+
 5. In Paraview, navigate to File -> Open. Since `/home` is shared, navigate to `/home/<your-user>/openfoam_jobs/motorBike`.
 6. To load the dataset natively into Paraview, you can create a dummy `.foam` file:
+
    ```bash
    touch ~/openfoam_jobs/motorBike/motorBike.foam
    ```
+
    Select `motorBike.foam` in Paraview, click Apply, and you can now interactively analyze the simulation geometry and fluid dynamics.
