@@ -76,5 +76,6 @@ deployment_groups:
     - compute_partition
     - slurm_login
     settings:
+      enable_slurm_auth: true
       enable_controller_public_ips: true
       machine_type: e2-standard-4
